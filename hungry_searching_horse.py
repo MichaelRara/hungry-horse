@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import pandas as pd
 import pickle
@@ -27,7 +27,6 @@ class HungrySearchingHorse:
         self.chessboard = chessboard
         self.starting_state = starting_state
         self.terminal_state = (self.chessboard.width-1, self.chessboard.height-1)
-        self.chessboard.states_rewards[self.terminal_state] = 10
         self.possible_actions = self._generate_possible_actions()
         self.states_actions_values = self._create_combinations_of_all_possible_states_and_actions()
 
@@ -92,34 +91,45 @@ class HungrySearchingHorse:
             return True
         return False
 
-    def run_sarsa(self) -> None:
-        episode_score = {}
-        for episode_number in range(0, 10_000):
+    def run_sarsa(self, amount_of_episodes: int = 10_000) -> None:
+        """
+        Run SARSA algorithm to find solution.
+        Optimized values of Q(state, action) pairs are stored in pickle file state_action_values.pickle.
+        Summary about total score and amount of steps in every episode is stored in excel file Summary.xlsx.
+
+        Args:
+            amount_of_episodes (int, optional): Maximum amount of episodes used for optimization. Defaults to 10_000.
+        """
+        episode_score_and_steps = {}
+        for episode_number in range(0, amount_of_episodes):
             print("episode number " + str(episode_number))
             actual_state = self.starting_state
             names_of_possible_actions = self._find_possible_actions(actual_state)
             step = 0
+            score = 0
             while names_of_possible_actions is not []:
                 name_of_actual_action = self._choose_action_by_greedy_method(actual_state, names_of_possible_actions)
                 next_state = self._calc_next_state(actual_state, name_of_actual_action)
-                if next_state == self.terminal_state:
-                    self._update_state_action_values(actual_state, name_of_actual_action,
-                                                     next_state, name_of_next_action="dl")
-                    episode_score[episode_number] = step
-                    break
-
                 names_of_possible_next_actions = self._find_possible_actions(next_state)
                 name_of_next_action = self._choose_action_by_greedy_method(next_state, names_of_possible_next_actions)
 
+                score += self.chessboard.states_rewards[next_state]
+                step += 1
+
                 self._update_state_action_values(actual_state, name_of_actual_action, next_state, name_of_next_action)
+                if next_state == self.terminal_state:
+                    episode_score_and_steps[episode_number] = [score, step]
+                    break
 
                 actual_state = next_state
                 name_of_actual_action = name_of_next_action
                 names_of_possible_actions = names_of_possible_next_actions
-                step += 1
+
         with open('state_action_values.pickle', 'wb') as handle:
             pickle.dump(self.states_actions_values, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        pd.DataFrame.from_dict(episode_score, orient='index', columns=["Steps_in_episode"]).to_excel("Summary.xlsx")
+        pd.DataFrame.from_dict(episode_score_and_steps,
+                               orient='index',
+                               columns=["Total_score", "Steps_in_episode"]).to_excel("Summary.xlsx")
 
     def _find_possible_actions(self, actual_state: tuple[int, int]) -> List[str]:
         """Detect all possible actions for actual_state.
@@ -206,7 +216,31 @@ class HungrySearchingHorse:
             + self.gamma * self.states_actions_values[next_state][name_of_next_action]
             - self.states_actions_values[actual_state][name_of_actual_action])
 
-    def create_animation_of_solution(self):
+    def evaluate_solution(self) -> Union[float, int]:
+        """Method to evaluate solution according to Q(state, action) pair values.
+
+        Returns:
+            float: Total score of the best solution.
+            int: Amount of steps for the best solution.
+        """
+        actual_state = self.starting_state
+        name_of_actual_action = self._select_best_action(self.starting_state,
+                                                         list(self.states_actions_values[self.starting_state].keys()))
+        step = 0
+        score = 0
+        while actual_state != self.terminal_state:
+            next_state = self._calc_next_state(actual_state, name_of_actual_action)
+            score += self.chessboard.states_rewards[next_state]
+            actual_state = next_state
+            name_of_actual_action = self._select_best_action(actual_state,
+                                                             list(self.states_actions_values[actual_state].keys()))
+            step += 1
+        return score, step
+
+    def create_animation_of_solution(self) -> None:
+        """Iterate over dictionary of Q(state, action) values pair to find the best path.
+        Every step is saved as jpg into folder.
+        """
         img_of_users_chessboard = self.chessboard.img_of_modified_chessboard
         pixels = img_of_users_chessboard.load()
         color_of_actual_state = (255, 128, 0)  # Orange
@@ -222,8 +256,9 @@ class HungrySearchingHorse:
 
             pixels[actual_state] = color_of_actual_state
             pixels[next_state] = color_of_next_state
-            img_of_users_chessboard.resize(size=(1_000, 1_000),
-                          resample=Image.NEAREST).transpose(Image.FLIP_TOP_BOTTOM).save("Chessboard_"+str(step)+".jpg")
+            img_of_users_chessboard.resize(
+                size=(1_000, 1_000),
+                resample=Image.NEAREST).transpose(Image.FLIP_TOP_BOTTOM).save("Chessboard_"+str(step)+".jpg")
 
             actual_state = next_state
             name_of_actual_action = self._select_best_action(actual_state,

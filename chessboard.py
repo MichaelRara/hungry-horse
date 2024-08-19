@@ -6,6 +6,13 @@ from PIL import Image
 class Chessboard:
 
     def __init__(self, width: int = 8, height: int = 8, step_cost: int = -1) -> None:
+        """
+
+        Args:
+            width (int, optional): Width of chessboard. Defaults to 8.
+            height (int, optional): Height of chessboard. Defaults to 8.
+            step_cost (int, optional): Reward of step. Defaults to -1.
+        """
         self.width = width
         self.height = height
         self.step_cost = step_cost
@@ -38,12 +45,6 @@ class Chessboard:
         self.states_rewards[(8, 5)] = -100
         self.states_rewards[(9, 4)] = -100
         self.states_rewards[(9, 5)] = -100
-
-        #  positive states
-        for i in range(0, self.width):
-            self.states_rewards[(i, 7)] = -100
-        for i in range(0, self.height):
-            self.states_rewards[(4, i)] = -100
         self.states_rewards[(8, 1)] = -100
         self.states_rewards[(8, 2)] = -100
         self.states_rewards[(8, 8)] = -100
@@ -54,13 +55,16 @@ class Chessboard:
         self.states_rewards[(8, 13)] = -100
         self.states_rewards[(8, 14)] = -100
         self.states_rewards[(9, 6)] = -100
-
-        #  unfriendly states
         self.states_rewards[(3, 2)] = -100
         self.states_rewards[(3, 3)] = -100
         self.states_rewards[(3, 5)] = -100
         self.states_rewards[(7, 2)] = -100
         self.states_rewards[(13, 12)] = -100
+
+        for i in range(0, self.width):
+            self.states_rewards[(i, 7)] = -100
+        for i in range(0, self.height):
+            self.states_rewards[(4, i)] = -100
 
     def draw_users_chessboard(self) -> None:
         """Draw chessboard modified by user and save it as "Chessboard.jpg".
@@ -103,8 +107,4 @@ class Chessboard:
         for state, reward in list(self.states_rewards.items()):
             if reward == -100:
                 pixels[state[0], state[1]] = (255, 0, 0)
-            elif reward == 5:
-                pixels[state[0], state[1]] = (0, 0, 255)
-            elif reward == -3:
-                pixels[state[0], state[1]] = (255, 0, 255)
         return img_of_standard_chessboard
