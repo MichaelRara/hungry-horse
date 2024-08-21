@@ -12,7 +12,7 @@ Every step has reward -1. If a horse make a step on the red state the reward is 
 Actual position of a horse is vizualized by orange color. Next position is vizualized by purple color.
 
 
-
+<p align="center">
 ![Chessboard_0](https://github.com/user-attachments/assets/74479bf1-c96a-4248-8828-ad0a6cecbb61)
 
 ![Chessboard_1](https://github.com/user-attachments/assets/ec2e28a9-dc0b-423b-a510-ca2ce9829f67)
@@ -36,6 +36,7 @@ Actual position of a horse is vizualized by orange color. Next position is vizua
 ![Chessboard_10](https://github.com/user-attachments/assets/d3c1731a-d130-4d2f-8ad7-22acacfdd937)
 
 ![Chessboard_11](https://github.com/user-attachments/assets/8d4d396f-b7f8-46cd-ad7e-1e4a7d26ca84)
+</p>
 
 
 
