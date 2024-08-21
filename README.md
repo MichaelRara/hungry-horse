@@ -14,16 +14,27 @@ Actual position of a horse is vizualized by orange color. Next position is vizua
 
 
 ![Chessboard_0](https://github.com/user-attachments/assets/74479bf1-c96a-4248-8828-ad0a6cecbb61)
+
 ![Chessboard_1](https://github.com/user-attachments/assets/ec2e28a9-dc0b-423b-a510-ca2ce9829f67)
+
 ![Chessboard_2](https://github.com/user-attachments/assets/19f032c1-f9da-4947-9f42-bebd07c218e7)
+
 ![Chessboard_3](https://github.com/user-attachments/assets/5e407bbd-5bf9-4c00-bba9-7876b9864768)
+
 ![Chessboard_4](https://github.com/user-attachments/assets/6a5877a4-324d-4e41-aee7-1fd4025cf485)
+
 ![Chessboard_5](https://github.com/user-attachments/assets/2d803031-20e1-4f8c-8131-ba1bfeb5067b)
+
 ![Chessboard_6](https://github.com/user-attachments/assets/57757c42-9251-4977-82b4-407e3ebd5b72)
+
 ![Chessboard_7](https://github.com/user-attachments/assets/8c1e3974-dfb2-436d-ab75-6cccbe50a233)
+
 ![Chessboard_8](https://github.com/user-attachments/assets/611e6aef-d40f-4602-8a89-1624e51bc5c9)
+
 ![Chessboard_9](https://github.com/user-attachments/assets/ddf71aa2-26e4-4b15-b4bd-f92323eadcf1)
+
 ![Chessboard_10](https://github.com/user-attachments/assets/d3c1731a-d130-4d2f-8ad7-22acacfdd937)
+
 ![Chessboard_11](https://github.com/user-attachments/assets/8d4d396f-b7f8-46cd-ad7e-1e4a7d26ca84)
 
 
