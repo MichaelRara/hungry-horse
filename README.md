@@ -9,6 +9,7 @@ Detected solution is saved as a set of jpg images into working directory. Bear i
 
 # Chessboard example
 Every step has reward -1. If a horse make a step on the red state the reward is -100. The goal is to find a way from bottom left corner into top right corner with lowest sum of rewards.
-
-
 Actual position of a horse is vizualized by orange color. Next position is vizualized by purple color.
+![Chessboard_2](https://github.com/user-attachments/assets/a8e23934-cc59-41cd-ac77-d41e446deca5)
+![Chessboard_1](https://github.com/user-attachments/assets/1e50b824-a207-4529-bda6-9b62a91ba87a)
+![Chessboard_0](https://github.com/user-attachments/assets/9a6d0e04-4dd8-4e84-be8a-cc4cfd2fdda0)
