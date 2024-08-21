@@ -36,7 +36,6 @@ class Chessboard:
         """Manual modification of step cost for selected states. User can modify this method by his will.
         Be aware to modify states which are included in chessboard!
         """
-        #  deadly states
         self.states_rewards[(5, 5)] = -100
         self.states_rewards[(5, 6)] = -100
         self.states_rewards[(6, 5)] = -100
@@ -60,7 +59,6 @@ class Chessboard:
         self.states_rewards[(3, 5)] = -100
         self.states_rewards[(7, 2)] = -100
         self.states_rewards[(13, 12)] = -100
-
         for i in range(0, self.width):
             self.states_rewards[(i, 7)] = -100
         for i in range(0, self.height):
@@ -72,7 +70,7 @@ class Chessboard:
         img_of_standard_chessboard = self.draw_standard_chessboard()
         self.img_of_modified_chessboard = self._draw_modified_chessboard(img_of_standard_chessboard)
         self.img_of_modified_chessboard.resize(
-                                        size=(1_000, 1_000),
+                                        size=(300, 300),
                                         resample=Image.NEAREST).transpose(Image.FLIP_TOP_BOTTOM).save("Chessboard.jpg")
 
     def draw_standard_chessboard(self) -> Image:

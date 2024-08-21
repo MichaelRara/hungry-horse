@@ -13,13 +13,19 @@ class HungrySearchingHorse:
     def __init__(self,
                  chessboard: Chessboard,
                  starting_state: tuple[int, int] = (0, 0),
+                 initial_value_for_non_terminal_states: int = 0,
+                 initial_value_for_terminal_states: int = 0,
                  alpha: float = 0.01,
-                 eps: float = 0.1,
-                 gamma: float = 0.9) -> None:
+                 eps: float = 0.3,
+                 gamma: float = 1) -> None:
         """
         Args:
             chessboard (Chessboard): Instance of a class Chessboard.
             starting_state (tuple[int, int], optional): Starting position of a horse. Defaults to (0, 0).
+            initial_value_for_non_terminal_states (int, optional): Initial value of Q(state, action) for non terminal
+                                                                   states. Defaults to 0.
+            initial_value_for_terminal_states (int, optional): Initial value of Q(state, action) for terminal states.
+                                    Should be higher or equal to initial_value_for_non_terminal_states. Defaults to 0.
             alpha (float, optional): Gradient step parameter. Defaults to 0.1.
             eps (float, optional): Parameter for epsilon greedy search. Defaults to 0.05.
             gamma (float, optional): Factor to multiply Q(state, value) of next state-action pair. Defaults to 0.9.
@@ -28,6 +34,8 @@ class HungrySearchingHorse:
         self.starting_state = starting_state
         self.terminal_state = (self.chessboard.width-1, self.chessboard.height-1)
         self.possible_actions = self._generate_possible_actions()
+        self.initial_value_for_non_terminal_states = initial_value_for_non_terminal_states
+        self.initial_value_for_terminal_states = initial_value_for_terminal_states
         self.states_actions_values = self._create_combinations_of_all_possible_states_and_actions()
 
         self.alpha = alpha
@@ -60,21 +68,48 @@ class HungrySearchingHorse:
                 "lu": np.array([-2, 1])}
 
     def _create_combinations_of_all_possible_states_and_actions(self) -> Dict[tuple[int, int], Dict[str, float]]:
-        """Create combinations of all possible states and actions. Results are stored as a Dict of dictionaries.
-        The first key is meant to be coordinates of actual state. The value is inner dictionary where key is name of
-        action and value is its Q(state, action) value initialized to be zero.
+        """Initialize Q(state, value) pairs.
 
         Returns:
             Dict[tuple[int, int], Dict[str, float]]: All Q(state, action) values initialized to be zero.
         """
+        non_terminal_states_actions_values = self._initialize_non_terminal_states()
+        terminal_states_actions_values = self._initialize_terminal_state()
+        return {**non_terminal_states_actions_values, **terminal_states_actions_values}
+
+    def _initialize_non_terminal_states(self) -> Dict[tuple[int, int], Dict[str, float]]:
+        """Create combinations of all possible non terminal states and actions. Results are stored as a Dict of
+        dictionaries. The first key is meant to be coordinates of actual state. The value is inner dictionary where key
+        is name of action and value is its Q(state, action) value initialized to be zero.
+
+        Returns:
+            Dict[tuple[int, int], Dict[str, float]]: All non terminal Q(state, action) values initialized to be
+                                                    self.initial_value_for_non_terminal_states.
+        """
         states_actions_values = {}
-        for state in list(self.chessboard.states_rewards.keys()):
+        non_terminal_states = list(self.chessboard.states_rewards.keys())
+        non_terminal_states.remove(self.terminal_state)
+        for state in non_terminal_states:
             valid_actions = {}
             for action_name, action_vector in list(self.possible_actions.items()):
                 if self._action_valid(state, action_vector):
-                    valid_actions[action_name] = 0
+                    valid_actions[action_name] = self.initial_value_for_non_terminal_states
             states_actions_values[state] = valid_actions
         return states_actions_values
+
+    def _initialize_terminal_state(self) -> Dict[tuple[int, int], Dict[str, float]]:
+        """Initialize Q(state, action) values for terminal state and all its possible actions to be equal to
+        self.initial_value_for_terminal_states.
+
+        Returns:
+            Dict[tuple[int, int], Dict[str, float]]: Dictionary of all Q(state, value) pairs and their initial values.
+        """
+        valid_actions = {}
+        for action_name, action_vector in list(self.possible_actions.items()):
+            if self._action_valid(self.terminal_state, action_vector):
+                valid_actions[action_name] = self.initial_value_for_terminal_states
+        terminal_states_actions_values = {self.terminal_state: valid_actions}
+        return terminal_states_actions_values
 
     def _action_valid(self, state: tuple[int, int], action_vector: np.ndarray[int, int]) -> bool:
         """Check if action can be done in provided state.
@@ -91,6 +126,45 @@ class HungrySearchingHorse:
             return True
         return False
 
+    def run_q_learning(self, amount_of_episodes: int = 10_000) -> None:
+        """
+        Run Q learning algorithm to find solution.
+        Optimized values of Q(state, action) pairs are stored in pickle file state_action_values.pickle.
+        Summary about total score and amount of steps in every episode is stored in excel file Summary.xlsx.
+
+        Args:
+            amount_of_episodes (int, optional): Maximum amount of episodes used for optimization. Defaults to 10_000.
+        """
+        episode_score_and_steps = {}
+        for episode_number in range(0, amount_of_episodes):
+            print("episode number " + str(episode_number))
+            actual_state = self.starting_state
+            names_of_possible_actions = self._find_possible_actions(actual_state)
+            step = 0
+            score = 0
+            while actual_state != self.terminal_state:
+                name_of_actual_action = self._choose_action_by_greedy_method(actual_state, names_of_possible_actions)
+                next_state = self._calc_next_state(actual_state, name_of_actual_action)
+                names_of_possible_next_actions = self._find_possible_actions(next_state)
+                name_of_next_action = self._select_best_action(next_state, names_of_possible_next_actions)
+
+                score += self.chessboard.states_rewards[next_state]
+                step += 1
+
+                self._update_state_action_values(actual_state, name_of_actual_action, next_state, name_of_next_action)
+
+                actual_state = next_state
+                name_of_actual_action = name_of_next_action
+                names_of_possible_actions = names_of_possible_next_actions
+
+        episode_score_and_steps[episode_number] = [score, step]
+
+        with open('state_action_values_q_learning.pickle', 'wb') as handle:
+            pickle.dump(self.states_actions_values, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        pd.DataFrame.from_dict(episode_score_and_steps,
+                               orient='index',
+                               columns=["Total_score", "Steps_in_episode"]).to_excel("Summary_q_learning.xlsx")
+
     def run_sarsa(self, amount_of_episodes: int = 10_000) -> None:
         """
         Run SARSA algorithm to find solution.
@@ -100,6 +174,37 @@ class HungrySearchingHorse:
         Args:
             amount_of_episodes (int, optional): Maximum amount of episodes used for optimization. Defaults to 10_000.
         """
+        episode_score_and_steps = {}
+        for episode_number in range(0, amount_of_episodes):
+            print("episode number " + str(episode_number))
+            actual_state = self.starting_state
+            names_of_possible_actions = self._find_possible_actions(actual_state)
+            step = 0
+            score = 0
+            while actual_state != self.terminal_state:
+                name_of_actual_action = self._choose_action_by_greedy_method(actual_state, names_of_possible_actions)
+                next_state = self._calc_next_state(actual_state, name_of_actual_action)
+                names_of_possible_next_actions = self._find_possible_actions(next_state)
+                name_of_next_action = self._choose_action_by_greedy_method(next_state, names_of_possible_next_actions)
+
+                score += self.chessboard.states_rewards[next_state]
+                step += 1
+
+                self._update_state_action_values(actual_state, name_of_actual_action, next_state, name_of_next_action)
+
+                actual_state = next_state
+                name_of_actual_action = name_of_next_action
+                names_of_possible_actions = names_of_possible_next_actions
+
+        episode_score_and_steps[episode_number] = [score, step]
+
+        with open('state_action_values_sarsa.pickle', 'wb') as handle:
+            pickle.dump(self.states_actions_values, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        pd.DataFrame.from_dict(episode_score_and_steps,
+                               orient='index',
+                               columns=["Total_score", "Steps_in_episode"]).to_excel("Summary_SARSA.xlsx")
+
+    def run_n_step_sarsa(self, steps: int, amount_of_episodes: int = 10_000) -> None:
         episode_score_and_steps = {}
         for episode_number in range(0, amount_of_episodes):
             print("episode number " + str(episode_number))
@@ -125,11 +230,13 @@ class HungrySearchingHorse:
                 name_of_actual_action = name_of_next_action
                 names_of_possible_actions = names_of_possible_next_actions
 
-        with open('state_action_values.pickle', 'wb') as handle:
+        with open('state_action_values_sarsa.pickle', 'wb') as handle:
             pickle.dump(self.states_actions_values, handle, protocol=pickle.HIGHEST_PROTOCOL)
         pd.DataFrame.from_dict(episode_score_and_steps,
                                orient='index',
-                               columns=["Total_score", "Steps_in_episode"]).to_excel("Summary.xlsx")
+                               columns=["Total_score", "Steps_in_episode"]).to_excel("Summary_SARSA.xlsx")
+        
+        return 0
 
     def _find_possible_actions(self, actual_state: tuple[int, int]) -> List[str]:
         """Detect all possible actions for actual_state.
@@ -257,7 +364,7 @@ class HungrySearchingHorse:
             pixels[actual_state] = color_of_actual_state
             pixels[next_state] = color_of_next_state
             img_of_users_chessboard.resize(
-                size=(1_000, 1_000),
+                size=(300, 300),
                 resample=Image.NEAREST).transpose(Image.FLIP_TOP_BOTTOM).save("Chessboard_"+str(step)+".jpg")
 
             actual_state = next_state
@@ -272,7 +379,7 @@ def main() -> None:
     chessboard.draw_users_chessboard()
 
     hungry_horse = HungrySearchingHorse(chessboard)
-    hungry_horse.run_sarsa()
+    hungry_horse.run_sarsa(20_000)
     hungry_horse.create_animation_of_solution()
 
 
