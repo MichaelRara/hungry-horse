@@ -9,6 +9,9 @@ Detected solution is saved as a set of jpg images into working directory. Bear i
 
 One of possible solution how to handle this uncomfortable situation is to used random start initialization to frequently update states which are not so much often updated in this reqular book example code.
 
+# Implemented reinforcement learning algorithm
+Script starts in method main() whre user can define isntance of a class Chessboard and instance of a class HungrySearchingHorse. Parameters of reinforcement learning are defined in costructor of class HungrySearchingHorse. In the next step user can choose one of following methods to find a way: run_sarsa(), run_q_learning(), run_n_step_sarsa().
+
 # Chessboard
 Every step has reward -1. If a horse make a step on the red state the reward is -100. The goal is to find a way from bottom left corner into top right corner with lowest sum of rewards.
 Actual position of a horse is vizualized by orange color. Next position is vizualized by purple color.
