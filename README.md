@@ -10,7 +10,7 @@ Detected solution is saved as a set of jpg images into working directory. Bear i
 One of possible solution how to handle this uncomfortable situation is to used random start initialization to frequently update states which are not so much often updated in this reqular book example code.
 
 # Implemented reinforcement learning algorithm
-Script starts in method main() where user can define isntance of a class Chessboard and instance of a class HungrySearchingHorse. Parameters of reinforcement learning are defined in costructor of class HungrySearchingHorse. In the next step user can choose one of following methods to find a way: 
+Script starts in method main() where user can define instance of a class Chessboard and instance of a class HungrySearchingHorse. Parameters of reinforcement learning are defined in costructor of class HungrySearchingHorse. In the next step user can choose one of following methods to find a way: 
 
 run_sarsa()
 
