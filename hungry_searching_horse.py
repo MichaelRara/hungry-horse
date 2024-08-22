@@ -129,8 +129,8 @@ class HungrySearchingHorse:
     def run_q_learning(self, amount_of_episodes: int = 10_000) -> None:
         """
         Run Q learning algorithm to find solution.
-        Optimized values of Q(state, action) pairs are stored in pickle file state_action_values.pickle.
-        Summary about total score and amount of steps in every episode is stored in excel file Summary.xlsx.
+        Optimized values of Q(state, action) pairs are stored in pickle file state_action_values_q_learning.pickle.
+        Summary about total score and amount of steps in every episode is stored in excel file Summary_q_learning.xlsx.
 
         Args:
             amount_of_episodes (int, optional): Maximum amount of episodes used for optimization. Defaults to 10_000.
@@ -168,8 +168,8 @@ class HungrySearchingHorse:
     def run_sarsa(self, amount_of_episodes: int = 10_000) -> None:
         """
         Run SARSA algorithm to find solution.
-        Optimized values of Q(state, action) pairs are stored in pickle file state_action_values.pickle.
-        Summary about total score and amount of steps in every episode is stored in excel file Summary.xlsx.
+        Optimized values of Q(state, action) pairs are stored in pickle file state_action_values_sarsa.pickle.
+        Summary about total score and amount of steps in every episode is stored in excel file Summary_SARSA.xlsx.
 
         Args:
             amount_of_episodes (int, optional): Maximum amount of episodes used for optimization. Defaults to 10_000.
@@ -204,39 +204,81 @@ class HungrySearchingHorse:
                                orient='index',
                                columns=["Total_score", "Steps_in_episode"]).to_excel("Summary_SARSA.xlsx")
 
-    def run_n_step_sarsa(self, steps: int, amount_of_episodes: int = 10_000) -> None:
+    def run_n_step_sarsa(self, amount_of_steps: int, amount_of_episodes: int = 10_000) -> None:
+        """Run n_step_SARSA algorithm to find solution.
+        Optimized values of Q(state, action) pairs are stored in pickle file state_action_values_n_step_sarsa.pickle.
+        Summary about total score and amount of steps in every episode is stored in excel file
+        Summary_n_step_SARSA.xlsx.
+
+        Args:
+            amount_of_steps (int): Amount of steps to use for estimation of gain in current state.
+            amount_of_episodes (int, optional): Maximum amount of episodes used for optimization. Defaults to 10_000.
+        """
         episode_score_and_steps = {}
         for episode_number in range(0, amount_of_episodes):
             print("episode number " + str(episode_number))
-            actual_state = self.starting_state
-            names_of_possible_actions = self._find_possible_actions(actual_state)
+            starting_state = self._initialize_starting_state()
+            ending_time = np.inf  # T
+            tau = None
             step = 0
             score = 0
-            while names_of_possible_actions is not []:
-                name_of_actual_action = self._choose_action_by_greedy_method(actual_state, names_of_possible_actions)
-                next_state = self._calc_next_state(actual_state, name_of_actual_action)
-                names_of_possible_next_actions = self._find_possible_actions(next_state)
-                name_of_next_action = self._choose_action_by_greedy_method(next_state, names_of_possible_next_actions)
+            actual_time_step = 0  # t
+            sequence_of_rewards = []
+            sequence_of_visited_states = [starting_state]
+            names_of_possible_actions = self._find_possible_actions(sequence_of_visited_states[-1])
+            name_of_actual_action = self._choose_action_by_greedy_method(sequence_of_visited_states[-1],
+                                                                         names_of_possible_actions)
+            sequence_of_actions = [name_of_actual_action]
+            while tau != ending_time - 1:
+                if actual_time_step < ending_time:
+                    next_state = self._calc_next_state(sequence_of_visited_states[-1], sequence_of_actions[-1])
+                    sequence_of_rewards.append(self.chessboard.states_rewards[next_state])
+                    sequence_of_visited_states.append(next_state)
 
-                score += self.chessboard.states_rewards[next_state]
-                step += 1
+                    score += self.chessboard.states_rewards[next_state]
+                    step += 1
 
-                self._update_state_action_values(actual_state, name_of_actual_action, next_state, name_of_next_action)
-                if next_state == self.terminal_state:
-                    episode_score_and_steps[episode_number] = [score, step]
-                    break
+                    if next_state == self.terminal_state:
+                        ending_time = actual_time_step + 1
+                    else:
+                        names_of_possible_next_actions = self._find_possible_actions(sequence_of_visited_states[-1])
+                        name_of_next_action = self._choose_action_by_greedy_method(sequence_of_visited_states[-1],
+                                                                                   names_of_possible_next_actions)
+                        sequence_of_actions.append(name_of_next_action)
 
-                actual_state = next_state
-                name_of_actual_action = name_of_next_action
-                names_of_possible_actions = names_of_possible_next_actions
-
-        with open('state_action_values_sarsa.pickle', 'wb') as handle:
+                tau = actual_time_step - amount_of_steps + 1
+                if tau >= 0:
+                    total_gain = 0
+                    for i in range(tau+1, min(tau+amount_of_steps+1, ending_time)):
+                        total_gain += self.gamma**(i-tau-1)*sequence_of_rewards[i-1]
+                    if tau + amount_of_steps < ending_time:
+                        total_gain = (total_gain
+                                      + self.gamma**amount_of_steps
+                                      * self.states_actions_values[sequence_of_visited_states[tau + amount_of_steps]][
+                                        sequence_of_actions[tau + amount_of_steps]])
+                    self.states_actions_values[sequence_of_visited_states[tau]][sequence_of_actions[tau]] += (
+                            self.alpha
+                            * (self.gamma*total_gain
+                            - self.states_actions_values[sequence_of_visited_states[tau]][sequence_of_actions[tau]]))
+                actual_time_step += 1
+            episode_score_and_steps[episode_number] = [score, step]
+        with open('state_action_values_n_step_sarsa.pickle', 'wb') as handle:
             pickle.dump(self.states_actions_values, handle, protocol=pickle.HIGHEST_PROTOCOL)
         pd.DataFrame.from_dict(episode_score_and_steps,
                                orient='index',
-                               columns=["Total_score", "Steps_in_episode"]).to_excel("Summary_SARSA.xlsx")
-        
-        return 0
+                               columns=["Total_score", "Steps_in_episode"]).to_excel("Summary_n_step_SARSA.xlsx")
+
+    def _initialize_starting_state(self) -> tuple[int, int]:
+        """Initialize starting state randomly. Must not be equal to the terminal state.
+
+        Returns:
+            tuple[int, int]: Coordinates of starting state.
+        """
+        while True:
+            selected_starting_state = list(self.states_actions_values.keys())[
+                                np.random.randint(0, len(list(self.states_actions_values.keys())))]
+            if selected_starting_state != self.terminal_state:
+                return selected_starting_state
 
     def _find_possible_actions(self, actual_state: tuple[int, int]) -> List[str]:
         """Detect all possible actions for actual_state.
