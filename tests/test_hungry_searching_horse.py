@@ -77,6 +77,13 @@ def test_action_valid(horse_parameters, state, action_vector, expected_boolean):
     horse = HungrySearchingHorse(**horse_parameters)
     assert horse._action_valid(state, np.array(action_vector)) == expected_boolean
 
+@pytest.mark.parametrize("horse_parameters, expected_started_state",
+                         [(horse_parameters_1, (11, 7))])
+def test_initialize_starting_state(horse_parameters, expected_started_state):
+    np.random.seed(0)
+    horse = HungrySearchingHorse(**horse_parameters)
+    assert horse._initialize_starting_state() == expected_started_state
+
 @pytest.mark.parametrize("horse_parameters, state, expected_possible_actions",
                          [(horse_parameters_2, (0, 0), ["ur", "ru"]),
                           (horse_parameters_2, (2, 2), ["dl", "ld"])])
