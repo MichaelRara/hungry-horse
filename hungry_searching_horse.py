@@ -1,15 +1,17 @@
 from typing import Dict, List, Union
 
-import pandas as pd
 import pickle
+import pandas as pd
 import numpy as np
 
-from chessboard import Chessboard
 from PIL import Image
+from chessboard import Chessboard
 
 
 class HungrySearchingHorse:
-
+    """Purpose of this class is to solve a path finding problem with a help of reinforcement learning. 
+    The goal os to find shortest path from to left position to top right position.
+    """
     def __init__(self,
                  chessboard: Chessboard,
                  starting_state: tuple[int, int] = (0, 0),
