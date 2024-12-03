@@ -24,6 +24,6 @@ def expected_chessboards():
 
 
 @pytest.mark.parametrize("param_key", ["parameters_1", "parameters_2", "parameters_3"])
-def test_create_rectangle_chessboard_2(chessboard_parameters, expected_chessboards, param_key):
+def test_create_rectangle_chessboard(chessboard_parameters, expected_chessboards, param_key):
     created_chessboard = Chessboard(**chessboard_parameters[param_key])
     assert created_chessboard.states_rewards == expected_chessboards[param_key]
