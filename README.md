@@ -19,7 +19,7 @@ run_q_learning()
 run_n_step_sarsa().
 
 # Chessboard
-Every step has reward -1. If a horse make a step on the red state the reward is -100. The goal is to find a way from bottom left corner into top right corner with lowest sum of rewards.
+Every step has reward -1. If a horse make a step on the red state the reward is -100. The goal is to find a way from bottom left corner into top right corner with lowest absolute sum of rewards.
 Actual position of a horse is vizualized by orange color. Next position is vizualized by purple color.
 
 
